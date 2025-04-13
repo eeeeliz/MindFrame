@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MindFrame</title>
+    <title>Чат-группировка</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    
+
+</head>
+<body>
+
+    
+
+    <!-- Левая панель -->
+    <div class="sidebar">
+        <span class="material-symbols-outlined icon toggle-sidebar">left_panel_open</span>
+        <div class="app-title">MindFrame</div>
+        <button class="new-chat-btn" id="new-chat-btn">+ New Chat</button>
+        <div id="chat-history">
+            <div class="chat-group" id="today">
+                <h3>Сегодня</h3>
+                <div class="chat-items"></div>
+            </div>
+            <div class="chat-group" id="yesterday">
+                <h3>Вчера</h3>
+                <div class="chat-items"></div>
+            </div>
+            <div class="chat-group" id="last-7-days">
+                <h3>Последние 7 дней</h3>
+                <div class="chat-items"></div>
+            </div>
+            <div class="chat-group" id="last-30-days">
+                <h3>Последние 30 дней</h3>
+                <div class="chat-items"></div>
+            </div>
+        </div>
+    </div> <!-- ❗ Вот здесь должно закрываться .sidebar -->
+
+    <span class="material-symbols-outlined open-sidebar" style="position:fixed; top:20px; left:20px; cursor:pointer; display:none;">left_panel_open</span>
+
+    <!-- Основная часть чата -->
+    <div class="main-content">
+        <div class="chat-container">
+            <div id="welcome-message" class="welcome-message">
+                <h2>How can I help you?</h2>
+                <p>Ask your question or start a new chat</p>
+              </div>
+            <div class="chat-box" id="response"></div>
+            
+            <div id="loading" class="loading-dots">
+                <div></div>
+                <div></div>
+            </div>
+            <form id="chat-form" class="chat-input">
+                <input type="text" id="user-input" name="user_input" placeholder="Ask MindFrame anything..." required>
+                <div class="chat-actions">
+                    <button id="voice-button" type="button">
+                        <span class="material-symbols-outlined">graphic_eq</span>
+                    </button>
+                    <button type="submit">
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+
+
+    <script>
+
+        // Глобальные переменные
+        let currentChatId = null;
+        let chatHistory = [];
+        let recognition = null;
+        
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // Загружаем историю из localStorage
+            const savedHistory = localStorage.getItem('chatHistory');
+            if (savedHistory) {
+                try {
+                    chatHistory = JSON.parse(savedHistory);
+                } catch (e) {
+                    console.error("Ошибка загрузки истории:", e);
+                    chatHistory = [];
+                }
+            }
+            
+            renderChatHistory();
+            
+            // Если есть история, загружаем последний чат
+            if (chatHistory.length > 0) {
+                loadChat(chatHistory[0].id);
+            } else {
+                createNewChat();
+            }
+            
+            // Инициализация голосового ввода
+            initVoiceRecognition();
+        
+        // Функция для экранирования HTML
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // Улучшенная функция форматирования
+
+
+    function formatAIResponse(text) {
+        if (!text) return '';
+
+        // Сначала экранируем HTML
+        text = escapeHtml(text);
+
+        // Форматирование:
+        // ## Заголовок → <h3>
+        text = text.replace(/##\s+(.*?)(\n|$)/g, '<h3>$1</h3>');
+
+        // **Жирный текст** → <strong>
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // *Курсив* → <em>
+        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // Автоматическое выделение важных фраз
+        const highlightPhrases = [
+            /(важно[:!?\s])/gi,
+            /(ключевой момент)/gi,
+            /(обратите внимание)/gi,
+            /(существенно[:!?\s])/gi,
+            /(главное[:!?\s])/gi,
+            /(запомните[:!?\s])/gi
+        ];
+
+        highlightPhrases.forEach(regex => {
+            text = text.replace(regex, '<span class="highlight">$1</span>');
+        });
+
+        // Разделители абзацев
+        text = text.replace(/\n{2,}/g, '<hr>');
+
+        // Сохраняем переносы строк
+        text = text.replace(/\n/g, '<br>');
+
+        // Обработка списков
+        text = text.replace(/^\s*-\s+(.*$)/gm, '<li>$1</li>');
+        text = text.replace(/(<li>.*<\/li>)+/g, '<ul>$&</ul>');
+
+        return text;
+    }
+        
+        // Функция создания нового чата
+        function createNewChat() {
+            const newChatId = 'chat-' + Date.now();
+            currentChatId = newChatId;
+            
+            const newChat = {
+                id: newChatId,
+                title: 'Новый чат',
+                timestamp: new Date().toLocaleString(),
+                messages: []
+            };
+            
+            chatHistory.unshift(newChat);
+            saveHistory();
+            renderChatHistory();
+            
+            // Очищаем окно чата
+            document.getElementById('response').innerHTML = '';
+            updateWelcomeMessageVisibility(); // вот сюда
+        }
+        
+        // Функция загрузки чата
+        function loadChat(chatId) {
+            const chat = chatHistory.find(c => c.id === chatId);
+            if (!chat) return;
+            
+            currentChatId = chatId;
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = '';
+            
+            // Восстанавливаем сообщения
+            chat.messages.forEach(msg => {
+                if (msg.role === 'user') {
+                    responseDiv.innerHTML += `<div class="message user-message">${escapeHtml(msg.content)}</div>`;
+                } else {
+                    const formattedResponse = formatAIResponse(msg.content);
+                    responseDiv.innerHTML += `<div class="message bot-message">${formattedResponse}</div>`;
+                }
+            });
+            
+            // Обновляем активный элемент в истории
+            document.querySelectorAll('.history-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.chatId === chatId);
+            });
+            
+            scrollToBottom();
+            updateWelcomeMessageVisibility(); // вот сюда
+        }
+        
+        // Функция сохранения сообщения
+        function saveMessage(role, content) {
+            const chat = chatHistory.find(c => c.id === currentChatId);
+            if (!chat) return;
+            
+            chat.messages.push({ role, content });
+            
+            // Обновляем заголовок (первое сообщение пользователя)
+            if (role === 'user' && chat.title === 'Новый чат') {
+                chat.title = content.length > 30 ? content.substring(0, 30) + '...' : content;
+            }
+            
+            chat.timestamp = new Date().toLocaleString();
+            saveHistory();
+            renderChatHistory();
+        }
+        
+        // Сохранение истории в localStorage
+        function saveHistory() {
+            try {
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            } catch (e) {
+                console.error("Ошибка сохранения истории:", e);
+                // Очищаем историю, если localStorage переполнен
+                if (e.name === 'QuotaExceededError') {
+                    localStorage.removeItem('chatHistory');
+                    chatHistory = chatHistory.slice(0, 3); // Оставляем только 3 последних чата
+                    saveHistory();
+                }
+            }
+        }
+        
+        // Отображение истории чатов
+        function renderChatHistory() {
+            const historyContainer = document.getElementById('chat-history');
+            historyContainer.innerHTML = '';
+            
+            chatHistory.forEach(chat => {
+                const item = document.createElement('div');
+                item.className = `history-item ${chat.id === currentChatId ? 'active' : ''}`;
+                item.dataset.chatId = chat.id;
+                item.innerHTML = `
+                    <div style="font-weight: bold">${escapeHtml(chat.title)}</div>
+                    <div style="font-size: 0.8em; color: #666">${chat.timestamp}</div>
+                `;
+                
+                item.addEventListener('click', () => loadChat(chat.id));
+                historyContainer.appendChild(item);
+            });
+        }
+        
+        // Прокрутка вниз
+        function scrollToBottom() {
+            const responseDiv = document.getElementById('response');
+            responseDiv.scrollTop = responseDiv.scrollHeight;
+        }
+        
+        // Инициализация голосового ввода
+        function initVoiceRecognition() {
+            const voiceButton = document.getElementById('voice-button');
+            const userInput = document.getElementById('user-input');
+            
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.lang = 'ru-RU';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                voiceButton.addEventListener('click', () => {
+                    try {
+                        recognition.start();
+                        voiceButton.classList.add('recording');
+                        userInput.placeholder = "Говорите сейчас...";
+                    } catch (e) {
+                        console.error("Ошибка распознавания голоса:", e);
+                        voiceButton.classList.remove('recording');
+                        userInput.placeholder = "Введите ваш вопрос...";
+                    }
+                });
+                
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    userInput.value = transcript;
+                    userInput.placeholder = "Введите ваш вопрос...";
+                    voiceButton.classList.remove('recording');
+                    
+                    // Автоматически отправляем сообщение через 1 секунду
+                    setTimeout(() => {
+                        document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+                    }, 1000);
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error("Ошибка распознавания:", event.error);
+                    voiceButton.classList.remove('recording');
+                    userInput.placeholder = "Введите ваш вопрос...";
+                    
+                    if (event.error === 'no-speech') {
+                        userInput.placeholder = "Голос не распознан. Попробуйте еще раз";
+                    }
+                };
+                
+                recognition.onend = () => {
+                    voiceButton.classList.remove('recording');
+                    userInput.placeholder = "Введите ваш вопрос...";
+                };
+            } else {
+                voiceButton.style.display = 'none';
+            }
+        }
+
+        
+        async function fetchResponse(message) {
+        const response = await fetch('/get_response', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `user_input=${encodeURIComponent(message)}`
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return response.json();
+        }
+        
+        function displayMessage(role, content) {
+        const responseDiv = document.getElementById('response');
+        const formattedContent = role === 'assistant' ? formatAIResponse(content) : escapeHtml(content);
+        const messageClass = role === 'assistant' ? 'bot-message' : 'user-message';
+        responseDiv.innerHTML += `<div class="message ${messageClass}">${formattedContent}</div>`;
+        saveMessage(role, content);
+        scrollToBottom();
+        updateWelcomeMessageVisibility(); // вот сюда
+        }
+
+        // Обработчик кнопки нового чата
+        document.getElementById('new-chat-btn').addEventListener('click', createNewChat);
+        
+        // Основной обработчик формы
+        document.getElementById('chat-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const userInput = document.getElementById('user-input');
+        const message = userInput.value.trim();
+        const loadingDiv = document.getElementById('loading');
+
+        if (!message) {
+            displayMessage('assistant', 'Ask MindFrame anything');
+            return;
+        }
+
+        if (!currentChatId) {
+            createNewChat();
+        }
+
+        displayMessage('user', message);
+        userInput.value = '';
+        loadingDiv.style.display = 'block';
+
+        try {
+            const data = await fetchResponse(message);
+            loadingDiv.style.display = 'none';
+
+            if (data.error) {
+                displayMessage('assistant', `Ошибка: ${escapeHtml(data.error)}`);
+            } else if (data.response) {
+                displayMessage('assistant', data.response);
+            } else {
+                displayMessage('assistant', 'Не удалось получить ответ от сервера');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            loadingDiv.style.display = 'none';
+            displayMessage('assistant', `Ошибка соединения: ${escapeHtml(error.message)}`);
+        }
+    });
+
+    function getToday() {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        function getYesterday() {
+            const d = getToday();
+            d.setDate(d.getDate() - 1);
+            return d;
+        }
+
+        function getNDaysAgo(n) {
+            const d = getToday();
+            d.setDate(d.getDate() - n);
+            return d;
+        }
+
+        
+
+        function groupChatsByDate(chats) {
+            const grouped = {
+                "Сегодня": [],
+                "Вчера": [],
+                "Последние 7 дней": [],
+                "Последние 30 дней": [],
+                "Старые": []
+            };
+
+            const today = new Date();
+            chats.forEach(chat => {
+                const chatDate = new Date(chat.date);
+                const diffTime = today - chatDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 0) grouped["Сегодня"].push(chat);
+                else if (diffDays === 1) grouped["Вчера"].push(chat);
+                else if (diffDays <= 7) grouped["Последние 7 дней"].push(chat);
+                else if (diffDays <= 30) grouped["Последние 30 дней"].push(chat);
+                else grouped["Старые"].push(chat);
+            });
+
+            return grouped;
+        }
+
+        async function loadChats() {
+            const res = await fetch("/chats");
+            const data = await res.json();
+            const grouped = groupChatsByDate(data);
+            const container = document.querySelector(".chat-history");
+            container.innerHTML = '';
+
+            for (const [label, chats] of Object.entries(grouped)) {
+                if (chats.length === 0) continue;
+
+                const header = document.createElement("div");
+                header.textContent = label;
+                header.style = 'font-weight: bold; margin-top: 15px;';
+                container.appendChild(header);
+
+                chats.forEach(chat => {
+                    const item = document.createElement("div");
+                    item.className = "chat-item";
+                    item.textContent = chat.title;
+                    container.appendChild(item);
+                });
+            }
+        }
+
+        loadChats(); // Запуск при загрузке
+        setInterval(loadChats, 60 * 1000); // Обновление чатов каждую минуту
+
+        
+    const sidebar = document.querySelector('.sidebar');
+    const openButton = document.querySelector('.open-sidebar');  // Кнопка открытия
+    const closeButton = document.querySelector('.toggle-sidebar'); // Кнопка закрытия
+
+    // Открытие боковой панели
+    openButton.addEventListener('click', () => {
+        sidebar.classList.remove('sidebar-closed'); // Убираем класс закрытия
+        openButton.style.display = 'none'; // Скрываем кнопку открытия
+        closeButton.style.display = 'block'; // Показываем кнопку закрытия
+    });
+
+    // Закрытие боковой панели
+    closeButton.addEventListener('click', () => {
+        sidebar.classList.add('sidebar-closed'); // Добавляем класс закрытия
+        openButton.style.display = 'block'; // Показываем кнопку открытия
+        closeButton.style.display = 'none'; // Скрываем кнопку закрытия
+    });
+
+    function updateWelcomeMessageVisibility() {
+  const chat = chatHistory.find(c => c.id === currentChatId);
+  const hasMessages = chat && chat.messages.length > 0;
+  document.getElementById('welcome-message').style.display = hasMessages ? 'none' : 'flex';
+}
+       
+        });
+    </script>
+</body>
+</html>

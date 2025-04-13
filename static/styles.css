@@ -1,0 +1,495 @@
+/* Основные стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+    background-color: #ffffff;
+}
+
+.welcome-message {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: #777;
+    text-align: center;
+  }
+
+  #welcome-message h2 {
+    color: #161a2e; /* Установите нужный цвет */
+    font-size: 24px; /* При необходимости измените размер */
+    font-weight: bold; /* Сделайте текст жирным, если нужно */
+}
+
+/* Изменение цвета текста под заголовком */
+#welcome-message p {
+    color: #1f2135; /* Установите нужный цвет */
+    font-size: 16px; /* При необходимости измените размер */
+    margin-top: 0px; /* Добавьте отступ сверху, если нужно */
+}
+
+.app-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333333;
+    margin-bottom: 25px;
+    margin-top: 15px;
+    margin-right: 60px;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+/* Боковая панель */
+.sidebar {
+    width: 250px;
+    position: relative;
+    background-color: #eaecf7;
+    border-right: 1px solid #ddd;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease; /* Анимация открытия/закрытия */
+}
+
+/* Скрытая панель */
+.sidebar-closed {
+    transform: translateX(-100%); /* Скрываем панель */
+}
+
+/* Позиционирование кнопок */
+.icon {
+    position: absolute;
+    top: 50px;
+    margin-top: 22px;
+    margin-right: 9px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.open-sidebar {
+    position: fixed;
+    font-size: 32px;
+    color: #333;
+    z-index: 9999;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    cursor: pointer;
+    display: block;
+    z-index: 1000;
+}
+
+.toggle-sidebar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px; /* Ширина полосы прокрутки */
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background-color: #ccc; /* Цвет ползунка */
+    border-radius: 4px; /* Скругление углов */
+    transition: background-color 0.3s; /* Плавный переход цвета */
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa; /* Цвет ползунка при наведении */
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background-color: #f0f0f0; /* Цвет фона полосы прокрутки */
+    border-radius: 4px; /* Скругление углов фона */
+}
+
+.material-symbols-outlined {
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24;
+    cursor: pointer;
+}
+
+/* Остальные стили остаются как есть */
+
+
+  
+
+/* Заголовки групп чатов */
+.chat-header {
+    font-weight: bold;
+    margin-top: 15px;
+    color: #333;
+}
+
+
+/* Кнопка "Создать чат" */
+#new-chat-btn {
+    padding: 10px;
+    background: #5269ce;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+#new-chat-btn:hover {
+    background: #0056b3;
+}
+
+.chat-item {
+    padding: 10px;
+    background: #eae9fa;
+    margin-bottom: 5px;
+    border-radius: 6px;
+    color: black; /* вдруг текст прозрачный */
+}
+
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    width: 70%; /* Уменьшите ширину, если нужно */
+    max-width: 850px; /* Установите максимальную ширину */
+    margin: 0 auto; /* Центрирует контейнер по горизонтали */
+    padding: 20px; /* Добавьте отступы, если нужно */
+    overflow-y: auto; /* Позволяет прокручивать содержимое, если оно выходит за пределы */
+}
+
+.new-chat-btn {
+    padding: 10px;
+    margin-bottom: 15px;
+    background-color: #292194;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.new-chat-btn:hover {
+    background-color: #0069d9;
+}
+
+.chat-history {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.history-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.history-item:hover {
+    background-color: #ededfd;
+}
+
+.history-item.active {
+    background-color: #f6f6ff;
+    font-weight: bold;
+}
+
+/* Основное содержимое */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    
+}
+
+.chat-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px;
+    scroll-behavior: smooth;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    
+}
+
+.chat-box::-webkit-scrollbar {
+    width: 8px; /* Ширина полосы прокрутки */
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+    background-color: #ccc; /* Цвет ползунка */
+    border-radius: 4px; /* Скругление углов */
+}
+
+.chat-box::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa; /* Цвет ползунка при наведении */
+}
+
+.chat-box::-webkit-scrollbar-track {
+    background-color: #f0f0f0; /* Цвет фона полосы прокрутки */
+}
+
+.message {
+    max-width: 85%;
+    align-self: flex-end;
+    padding: 12px 16px;
+    margin: 10px 0;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+    transition: opacity 0.3s;
+}
+
+.user-message {
+    display: inline-block;
+    max-width: 80%; /* Ограничение, чтобы не растягивалось на весь экран */
+    background-color: #e7e7f5;
+    color: black;
+    align-self: flex-end;
+    border-radius: 10px 10px 0 10px;
+    margin-left: auto;
+    border-bottom-right-radius: 4px;
+    
+}
+
+.user-message {
+    margin-right: 0 !important; /* Принудительно убирает отступ справа */
+    float: right; /* Запасной вариант */
+    clear: both; /* Предотвращает "наезжание" сообщений */
+}
+
+.bot-message {
+    background-color: rgb(249, 250, 255);
+    align-self: flex-start;
+    border: 1px solid #ffffff;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    padding: 12px 15px;
+    margin: 8px 0;
+    font-size: 15px;
+    line-height: 1.5;
+    border-radius: 10px 10px 10px 0;
+}
+
+.chat-input {
+    display: flex;
+    padding: 5px;
+    background: #fff;
+    border-top: 1px solid #ddd;
+    box-shadow: -2px 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    margin: 2px;
+    gap: 10px; /* расстояние между элементами */
+    margin-bottom: 20px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 10px 16px 12px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    outline: none;
+    height: 35px;
+    margin-bottom: 20px;
+    background-color: white; /* <---- вот сюда */
+}
+
+.chat-input input:focus {
+    outline: none;
+    box-shadow: none; /* Убирает синий ободок, который появляется при фокусе */
+}
+
+.chat-input input::placeholder {
+    color: #aaa;
+    font-size: 16px;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 10px;
+}
+
+/* Кнопка отправки */
+.chat-input button[type="submit"] {
+    background: #5269ce;
+    color: white;
+    border: none;
+    padding: 0 18px;
+    border-radius: 50px;
+    font-size: 22px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 5px; /* отступ сверху */
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    background: #e0e0e0;
+}
+
+.material-symbols-outlined {
+    font-size: 24px;
+}
+
+#voice-button {
+    background: #ffc56e;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    color: white;
+    border: none;
+    padding: 10px;
+    margin-left: 5px;
+    cursor: pointer;
+    border-radius: 50%;
+    font-size: 18px;
+    margin-top: 5px; /* отступ сверху */
+}
+
+#voice-button:hover {
+    background: #e68a00;
+}
+
+#voice-button:active {
+    background: #e68900;
+}
+
+#voice-button.recording {
+    background: #f44336;
+    animation: pulse 1.5s infinite;
+}
+
+#voice-button .material-symbols-outlined {
+    font-size: 28px; /* Можно отрегулировать */
+}
+
+
+.loading-dots {
+    display: none;
+    padding: 15px;
+    text-align: center;
+}
+
+.loading-dots div {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: #2c3d86;
+    border-radius: 50%;
+    margin: 0 4px;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dots div:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.loading-dots div:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+/* Стили для форматирования текста */
+.message h3 {
+    font-weight: 700;
+    font-size: 1.5em;
+    color: #2c3e50;
+    margin: 16px 0 12px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.message strong {
+    font-weight: 700;
+    color: #1b0404;
+    background-color: #ebe6ff;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.message .highlight {
+    background-color: #fff9c4;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.message em {
+    font-style: italic;
+    color: #555;
+}
+
+.message hr {
+    border: 0;
+    height: 1px;
+    background-color: #eee;
+    margin: 16px 0;
+}
+
+.message ul, .message ol {
+    padding-left: 24px;
+    margin: 8px 0;
+}
+
+.message li {
+    margin: 6px 0;
+}
+
+.message p {
+    margin: 6px 0;
+}
+
+/* Анимации */
+@keyframes bounce {
+    0%, 80%, 100% { 
+        transform: scale(0); 
+    }
+    40% { 
+        transform: scale(1); 
+    }
+}
+
+@keyframes pulse {
+    0% { 
+        transform: scale(1); 
+    }
+    50% { 
+        transform: scale(1.05); 
+    }
+    100% { 
+        transform: scale(1); 
+    }
+}
